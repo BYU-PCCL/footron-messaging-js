@@ -1,20 +1,43 @@
+interface BaseMessage {
+    type: MessageType;
+}
+
 export enum MessageType {
     HEARTBEAT = 0,
-    APPLICATION = 1,
-    LIFECYCLE = 2,
+    APPLICATION_APP = 1,
+    APPLICATION_CLIENT = 2,
+    LIFECYCLE = 3,
+
 }
 
-export interface ApplicationMessage {
-    onMessage: (body: string) => void,
-    body: string,
-    requestID?: string,
+interface BaseApplicationMessage extends BaseMessage {
+    body: unknown,
+    req?: string,
+    client: string,
 }
 
-export interface HeartbeatMessage {
+export interface ApplicationClientMessage extends BaseApplicationMessage {
+    type: MessageType.APPLICATION_CLIENT,
+
+
+}
+
+export interface ApplicationAppMessage extends  BaseApplicationMessage {
+    type: MessageType.APPLICATION_APP,
+
+
+}
+
+export interface HeartbeatMessage extends BaseMessage{
+    type: MessageType.HEARTBEAT,
     up: boolean,
     message: string,
 }
 
-export interface LifecycleMessage {
+export interface LifecycleMessage extends BaseMessage {
+    type: MessageType.LIFECYCLE,
     paused: boolean,
 }
+
+
+export type Message = ApplicationClientMessage | ApplicationAppMessage | HeartbeatMessage | LifecycleMessage

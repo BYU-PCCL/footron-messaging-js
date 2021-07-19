@@ -1,49 +1,27 @@
+import {Message, MessageType} from "./messages";
+
+export type SendProtocolMessage = (message: Message) => void
+
 export class Connection {
 
-    url: string;
-    socket: WebSocket;
-
-    constructor(url: string) {
-        this.url = url;
-        this.socket = new WebSocket(url);
-        this.socket.onopen = this.onOpen;
-        this.socket.onmessage = this.onMessage;
-        this.socket.onerror = this.onError;
-        this.socket.onclose = this.onClose;
-    }
+    id: string;
+    private readonly sendProtocolMessage: SendProtocolMessage;
+    private accepted: boolean;
 
 
-    onOpen(evt) {
-        console.log("on open triggered");
+    constructor(id: string, protocolMessage: SendProtocolMessage, accepted: boolean) {
+      this.id = id;
+      this.sendProtocolMessage = protocolMessage;
+      this.accepted = accepted;
 
     }
 
-    onClose() {
-        console.log("on close triggered");
-        this.socket.close();
+    sendMessage<T>(body: T) {
+        this.sendProtocolMessage( {
+            type: MessageType.APPLICATION_APP,
+            client: this.id,
+            body,
+        })
     }
-
-    onMessage() {
-        console.log("on message triggered");
-
-    }
-
-    onError() {
-        console.log("ERROR");
-
-    }
-
-    onRequest(func) {
-
-    }
-
-    message() {
-
-    }
-    
-    lock() {
-
-    }
-
 
 }

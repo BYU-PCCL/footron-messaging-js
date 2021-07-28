@@ -2,6 +2,7 @@ import {Connection} from "./connection";
 import {Message, MessageType} from "./messages";
 
 export type MessageCallback = (body: unknown) => void
+export type ConnectionCloseCallback = (body: unknown) => void
 
 export class MessagingClient {
 
@@ -13,6 +14,7 @@ export class MessagingClient {
     socket: WebSocket;
     connections: Map<string, Connection>;
     messageListeners: MessageCallback[];
+   // lock: ?protocol.Lock?;
 
     constructor(url: string) {
         this.socket = new WebSocket(url);
@@ -22,7 +24,16 @@ export class MessagingClient {
         this.socket.onmessage = this.onMessage;
         this.socket.onerror = this.onError;
         this.socket.onclose = this.onClose;
+        // this.lock = false;
     }
+
+    getLock() {
+        return this.lock;
+    }
+
+    // async lock(value: protocol.Lock) {
+    //
+    // }
 
     //Listeners
     addMessageListener(callback: MessageCallback) {

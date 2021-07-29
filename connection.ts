@@ -1,7 +1,7 @@
 import {Message, MessageType} from "./messages";
-
 import {MessagingClient} from "./messagingClient";
 import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
+import {LockStateError} from "./errors";
 
 
 export type SendProtocolMessage = (message: Message) => void

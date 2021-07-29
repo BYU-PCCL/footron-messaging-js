@@ -1,9 +1,57 @@
 import {Message, MessageType} from "./messages";
-import {ConnectionCloseCallback, MessageCallback, MessagingClient} from "./messagingClient";
+
+import {MessagingClient} from "./messagingClient";
+import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
+
 
 export type SendProtocolMessage = (message: Message) => void
 
 export class Connection {
+    /*
+    Public Connection interface
+     */
+
+    public _connection: _Connection;
+    
+    constructor(_connection: _Connection) {
+        this._connection = _connection;
+    }
+
+    public getId() {
+        return this._connection.id;
+    }
+
+    public isPaused() {
+        return this._connection.paused;
+    }
+
+    public accept() {
+        return this._connection.accept();
+    }
+
+    public sendMessage(body: unknown, requestId: string = "") {
+        return this._connection.sendMessage(body, requestId);
+    }
+
+    public addMessageListener(callback: MessageCallback) {
+        return this._connection.addMessageListener(callback);
+    }
+
+    public removeMessageListener(callback: MessageCallback) {
+        return this._connection.removeMessageListener(callback);
+    }
+
+    public addCloseListener(callback: ConnectionCloseCallback) {
+        return this._connection.addCloseListener(callback);
+    }
+
+    public removeCloseListener(callback: ConnectionCloseCallback){
+        return this._connection.removeCloseListener(callback);
+    }
+}
+
+
+export class _Connection {
 
     id: string;
     private readonly sendProtocolMessage: SendProtocolMessage;
@@ -18,7 +66,7 @@ export class Connection {
       this.sendProtocolMessage = protocolMessage;
       this.accepted = accepted;
       this.paused = false;
-      this.messagingClient = new MessagingClient(url)
+      this.messagingClient = new MessagingClient(url);
       this.messageListeners = new Set();
       this.closeListeners = new Set();
     }
@@ -34,21 +82,25 @@ export class Connection {
     private async updateAccess(accepted: boolean, reason: string = "none") {
         if (!this.messagingClient.getLock()) {
             //Lockstate error
+            throw new LockStateError("locked");
 
         }
         //access message???
     }
 
 
-    async sendMessage<T>(body: T) {
+
+    async sendMessage<T>(body: T, requestId?: string) {
+
         if(this.accepted == false) {
             //protocol error.
+            throw new Error("client not accepted");
         }
 
         await this.sendProtocolMessage( {
-            type: MessageType.APPLICATION_APP,
-            client: this.id,
+            type: MessageType.ApplicationApp,
             body,
+            req: requestId,
         })
     }
 

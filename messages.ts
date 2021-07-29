@@ -43,7 +43,7 @@ export enum MessageType {
 
   }
 
-interface BaseMessage {
+export interface BaseMessage {
     type: MessageType;
     // version: PROTOCOL_VERSION
 }

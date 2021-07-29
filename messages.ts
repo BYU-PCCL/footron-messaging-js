@@ -110,7 +110,7 @@ export interface ErrorMessage extends BaseMessage {
     error: string;
 }
 
-class DisplaySettings {
+export interface DisplaySettings {
     end_time: Number;
     // Lock states:
     // - false: no lock

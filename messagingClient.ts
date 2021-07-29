@@ -2,7 +2,7 @@ import {Connection} from "./connection";
 import {BaseMessage, Message, MessageType} from "./messages";
 
 export type MessageCallback = (body: unknown) => void
-export type ConnectionCloseCallback = (body: unknown) => void
+export type ConnectionCloseCallback = () => void
 
 export class MessagingClient {
 
@@ -16,7 +16,7 @@ export class MessagingClient {
     connections: Map<string, Connection>;
     messageListeners: MessageCallback[];
     lock: boolean | number;
-    endpoint: string;
+
 
    // lock: ?protocol.Lock?;
 
@@ -30,7 +30,7 @@ export class MessagingClient {
         this.socket.onerror = this.onError;
         this.socket.onclose = this.onClose;
         this.lock = false;
-        // this.endpoint = endpoint;
+
     }
 
     getLock() {

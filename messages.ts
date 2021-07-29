@@ -1,3 +1,4 @@
+// TODO Make Protocol project for JS library similar to the python messaging library
 export enum MessageType {
     // 
     // Heartbeat messages

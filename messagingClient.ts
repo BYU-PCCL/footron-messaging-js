@@ -1,9 +1,7 @@
-import {Connection} from "./connection";
+import {Connection, _Connection} from "./connection";
 import {BaseMessage, Message, MessageType} from "./messages";
 import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
 
-export type MessageCallback = (body: unknown) => void
-export type ConnectionCloseCallback = () => void
 export class MessagingClient {
 
     //listeners and methods to remove listeners
@@ -120,23 +118,32 @@ export class MessagingClient {
       } 
     }
 
-    private compareHeartbeatUpConnections(connections){
+    private compareHeartbeatUpConnections(connections: Connection[]){
       var localConnections = new Set(this.connections);
       var heartbeatConnections = new Set(connections);
 
       Array.from(heartbeatConnections.keys()).forEach(client => {
-        if (client.keys()[0] in localConnections.keys()){
-          heartbeatConnections.delete(client);
-          localConnections.delete(client);
+        if (client.getId() in localConnections.keys()){
+          const indexHB = connections.indexOf(client);
+          if (indexHB > -1) {
+            connections.splice(indexHB, 1);
+          }
+          // connections.delete(client.getId());
+          this.connections.delete(client.getId());
           return;
         }
-        this.addConnection(client.keys()[0]);
+        this.addConnection(client.getId());
       });
 
       Array.from(localConnections.keys()).forEach(client => {
         if (client.keys()[0] in heartbeatConnections){
-          heartbeatConnections.delete(client);
-          localConnections.delete(client);
+          
+          const indexHB = connections.indexOf(client.values()[0]);
+          if (indexHB > -1) {
+            connections.splice(indexHB, 1);
+          }
+          // connections.delete(client.getId());
+          this.connections.delete(client.keys()[0]);
           return;
         }
         this.removeConnection(client.keys()[0]);
@@ -155,7 +162,7 @@ export class MessagingClient {
 
 
     private addConnection(id: string){
-      var connection = new Connection(
+      var connection = new _Connection(
         id,
         this.url, 
         this.sendProtocolMessage, // Is this correct?
@@ -185,8 +192,10 @@ export class MessagingClient {
         this.messageListeners.length = 0;
     }
 
-    private notifyConnectionListeners(connection: Connection){
-      
+    private notifyConnectionListeners(connection: _Connection){
+      this.connectionListeners.forEach(callback => {
+        callback(new Connection(connection));
+      })
     }
 
 

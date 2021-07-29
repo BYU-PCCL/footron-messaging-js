@@ -14,6 +14,9 @@ export class MessagingClient {
     socket: WebSocket;
     connections: Map<string, Connection>;
     messageListeners: MessageCallback[];
+    lock: boolean | number;
+    endpoint: string;
+
    // lock: ?protocol.Lock?;
 
     constructor(url: string) {
@@ -24,14 +27,15 @@ export class MessagingClient {
         this.socket.onmessage = this.onMessage;
         this.socket.onerror = this.onError;
         this.socket.onclose = this.onClose;
-        // this.lock = false;
+        this.lock = false;
+        // this.endpoint = endpoint;
     }
 
     getLock() {
         return this.lock;
     }
 
-    // async lock(value: protocol.Lock) {
+    // async lock(value: boolean | number) {
     //
     // }
 
@@ -63,10 +67,41 @@ export class MessagingClient {
     private onMessage(data: string) {
         const message = JSON.parse(data);
 
-        if (message.type == MessageType.APPLICATION_CLIENT) {
-            this.notifyMessageListeners(message.body);
-
+        if (message.type == MessageType.HeartbeatClient) {
+          if(!message.up){
+            message.clients.forEach(id => this.removeConnection(id));
+            return;
+          }
+          // TODO: This test might be expensive and unnecessary, consider simplifying
+          //  or removing it
+          // await this._compare_heartbeat_up_connections(message.clients)
+          return;
         }
+
+        if (message.type == MessageType.Connect) {
+          if(!(message.client in this.connections)){
+            return;
+          }
+
+          this.addConnection(message.client);
+          return;
+        }
+
+        if (message.type == MessageType.ApplicationClient) {
+            this.notifyMessageListeners(message.body);
+            this.connections[message.client].notifyMessageListeners(message.body);
+            return;
+        }
+
+        if (message.type == MessageType.Lifecycle) {
+          this.connections[message.client].paused = message.paused;
+          return
+        }
+
+      //   raise protocol.UnhandledMessageTypeError(
+      //     f"Couldn't handle message type '{message.type}'"
+      //   )
+
 
     }
 
@@ -78,6 +113,11 @@ export class MessagingClient {
 
     }
 
+    private compareHeartbeatUpConnections(){
+      var localConnections = new Set(this.connections);
+
+    }
+
     private sendMessage<T>(body: T) {
         this.connections.forEach((connection) => connection.sendMessage(body));
     }
@@ -85,6 +125,21 @@ export class MessagingClient {
 
     // lock state, lock defines the max number of connections
     //
+
+
+    private addConnection(id: string){
+      var connection = new Connection(id,this.url);
+      this.connections[id] = connection;
+      this.notifyMessageListeners(connection);
+    }
+
+    private removeConnection(id: string){
+      if(!(id in this.connections )){
+        return;
+      }
+      this.connections[id].notifyCloseListeners();
+      delete this.connections[id];
+    }
 
 
 

@@ -110,7 +110,11 @@ export interface ErrorMessage extends BaseMessage {
     error: string;
 }
 
+<<<<<<< HEAD
 export interface DisplaySettings {
+=======
+interface DisplaySettings {
+>>>>>>> 361891263008a0de5bf69154d6d1690036dabee1
     end_time: Number;
     // Lock states:
     // - false: no lock
@@ -146,5 +150,5 @@ export type Message =
 | ApplicationClientMessage
 | ApplicationAppMessage
 | ErrorMessage
-| DisplaySettings
+| DisplaySettingsMessage
 | LifecycleMessage;

@@ -1,6 +1,8 @@
 import {Message, MessageType} from "./messages";
-import {ConnectionCloseCallback, MessageCallback, MessagingClient} from "./messagingClient";
-import {LockStateError, ConnectionNotFoundError} from "./errors";
+
+import {MessagingClient} from "./messagingClient";
+import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
+
 
 export type SendProtocolMessage = (message: Message) => void
 
@@ -87,7 +89,9 @@ export class _Connection {
     }
 
 
-    async sendMessage<T>(body: T, requestId: string = "") {
+
+    async sendMessage<T>(body: T, requestId?: string) {
+
         if(this.accepted == false) {
             //protocol error.
             throw new Error("client not accepted");

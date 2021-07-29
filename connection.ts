@@ -1,5 +1,6 @@
 import {Message, MessageType} from "./messages";
-import {ConnectionCloseCallback, MessageCallback, MessagingClient} from "./messagingClient";
+import {MessagingClient} from "./messagingClient";
+import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
 
 export type SendProtocolMessage = (message: Message) => void
 
@@ -40,7 +41,7 @@ export class Connection {
     }
 
 
-    async sendMessage<T>(body: T) {
+    async sendMessage<T>(body: T, requestId?: string) {
         if(this.accepted == false) {
             //protocol error.
         }

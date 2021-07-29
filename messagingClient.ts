@@ -1,8 +1,7 @@
 import {Connection} from "./connection";
 import {BaseMessage, Message, MessageType} from "./messages";
+import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
 
-export type MessageCallback = (body: unknown) => void
-export type ConnectionCloseCallback = (body: unknown) => void
 
 export class MessagingClient {
 
@@ -14,6 +13,7 @@ export class MessagingClient {
     socket: WebSocket;
     url: string;
     connections: Map<string, Connection>;
+    connectionListeners: ConnectionCallback[];
     messageListeners: MessageCallback[];
     lock: boolean | number;
 
@@ -39,25 +39,12 @@ export class MessagingClient {
     //
     // }
 
-    //Listeners
-    addMessageListener(callback: MessageCallback) {
-        this.messageListeners.push(callback);
-    }
-
-    removeMessageListener(callback: MessageCallback) {
-        this.messageListeners.unshift(callback);
-    }
-
     private async sendProtocolMessage(message: BaseMessage) {
       this.checkOutgoingProtocolMessage(message);
     }
 
     private notifyMessageListeners(body: unknown) {
         this.messageListeners.forEach((callback) => callback(body))
-    }
-
-    private clearMessageListeners() {
-        this.messageListeners.length = 0;
     }
 
     private onOpen() {
@@ -134,6 +121,15 @@ export class MessagingClient {
       var localConnections = new Set(this.connections);
       var heartbeatConnections = new Set(connections);
 
+      Array.from(heartbeatConnections.keys()).forEach(client => {
+        if (client.keys()[0] in localConnections.keys()){
+          heartbeatConnections.delete(client);
+          localConnections.delete(client);
+          return;
+        }
+        this.addConnection(client.keys()[0]);
+      });
+
       Array.from(localConnections.keys()).forEach(client => {
         if (client.keys()[0] in heartbeatConnections){
           heartbeatConnections.delete(client);
@@ -143,10 +139,11 @@ export class MessagingClient {
         this.removeConnection(client.keys()[0]);
       });
 
+
     }
 
-    private sendMessage<T>(body: T) {
-        this.connections.forEach((connection) => connection.sendMessage(body));
+    private sendMessage<T>(body: T, requestId: string) {
+        this.connections.forEach((connection) => connection.sendMessage(body, requestId));
     }
 
 
@@ -171,6 +168,24 @@ export class MessagingClient {
       this.connections[id].notifyCloseListeners();
       delete this.connections[id];
     }
+
+    //Listeners
+    addMessageListener(callback: MessageCallback) {
+      this.messageListeners.push(callback);
+    }
+
+    removeMessageListener(callback: MessageCallback) {
+      this.messageListeners.unshift(callback);
+    }
+
+    private clearMessageListeners() {
+        this.messageListeners.length = 0;
+    }
+
+    private notifyConnectionListeners(connection: Connection){
+      
+    }
+
 
 
 

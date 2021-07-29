@@ -46,7 +46,7 @@ export class Connection {
         }
 
         await this.sendProtocolMessage( {
-            type: MessageType.APPLICATION_APP,
+            type: MessageType.ApplicationApp,
             client: this.id,
             body,
         })

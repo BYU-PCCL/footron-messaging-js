@@ -2,12 +2,8 @@ import {Connection} from "./connection";
 import {BaseMessage, Message, MessageType} from "./messages";
 import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
 
-<<<<<<< HEAD
 export type MessageCallback = (body: unknown) => void
 export type ConnectionCloseCallback = () => void
-=======
->>>>>>> 361891263008a0de5bf69154d6d1690036dabee1
-
 export class MessagingClient {
 
     //listeners and methods to remove listeners
@@ -21,10 +17,7 @@ export class MessagingClient {
     connectionListeners: ConnectionCallback[];
     messageListeners: MessageCallback[];
     lock: boolean | number;
-<<<<<<< HEAD
 
-=======
->>>>>>> 361891263008a0de5bf69154d6d1690036dabee1
 
    // lock: ?protocol.Lock?;
 
@@ -38,10 +31,7 @@ export class MessagingClient {
         this.socket.onerror = this.onError;
         this.socket.onclose = this.onClose;
         this.lock = false;
-<<<<<<< HEAD
 
-=======
->>>>>>> 361891263008a0de5bf69154d6d1690036dabee1
     }
 
     getLock() {

@@ -18,7 +18,7 @@ export class Connection {
       this.sendProtocolMessage = protocolMessage;
       this.accepted = accepted;
       this.paused = false;
-      this.messagingClient = new MessagingClient(url)
+      this.messagingClient = new MessagingClient(url);
       this.messageListeners = new Set();
       this.closeListeners = new Set();
     }

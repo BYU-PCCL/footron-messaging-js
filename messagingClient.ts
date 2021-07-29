@@ -1,5 +1,5 @@
 import {Connection} from "./connection";
-import {Message, MessageType} from "./messages";
+import {BaseMessage, Message, MessageType} from "./messages";
 
 export type MessageCallback = (body: unknown) => void
 export type ConnectionCloseCallback = (body: unknown) => void
@@ -12,6 +12,7 @@ export class MessagingClient {
 
 
     socket: WebSocket;
+    url: string;
     connections: Map<string, Connection>;
     messageListeners: MessageCallback[];
     lock: boolean | number;
@@ -21,6 +22,7 @@ export class MessagingClient {
 
     constructor(url: string) {
         this.socket = new WebSocket(url);
+        this.url = url;
         this.connections = new Map();
         this.messageListeners = [];
         this.socket.onopen = this.onOpen;
@@ -48,8 +50,8 @@ export class MessagingClient {
         this.messageListeners.unshift(callback);
     }
 
-    private sendProtocolMessage(body: Message) {
-        this.socket.send(JSON.stringify(body))
+    private async sendProtocolMessage(message: BaseMessage) {
+      this.checkOutgoingProtocolMessage(message);
     }
 
     private notifyMessageListeners(body: unknown) {
@@ -113,8 +115,35 @@ export class MessagingClient {
 
     }
 
-    private compareHeartbeatUpConnections(){
+    private checkOutgoingProtocolMessage(message: BaseMessage){
+      if (message.type == MessageType.Access && !(this.lock)) {
+        // raise LockStateError(
+        //   "A lock is required to send access messages to clients"
+        // )
+      }
+      if (!(message.type in [
+        MessageType.Access,
+        MessageType.ApplicationApp,
+        MessageType.DisplaySettings,
+      ])){
+        // raise protocol.UnhandledMessageTypeError(
+        //   f"Couldn't send message type '{message.type}'"
+        // )
+      } 
+    }
+
+    private compareHeartbeatUpConnections(connections){
       var localConnections = new Set(this.connections);
+      var heartbeatConnections = new Set(connections);
+
+      Array.from(localConnections.keys()).forEach(client => {
+        if (client.keys()[0] in heartbeatConnections){
+          heartbeatConnections.delete(client);
+          localConnections.delete(client);
+          return;
+        }
+        this.removeConnection(client.keys()[0]);
+      });
 
     }
 
@@ -128,7 +157,11 @@ export class MessagingClient {
 
 
     private addConnection(id: string){
-      var connection = new Connection(id,this.url);
+      var connection = new Connection(
+        id,
+        this.url, 
+        this.sendProtocolMessage, // Is this correct?
+        !(this.lock));
       this.connections[id] = connection;
       this.notifyMessageListeners(connection);
     }

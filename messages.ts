@@ -1,3 +1,5 @@
+export const PROTOCOL_VERSION = 1;
+
 // TODO Make Protocol project for JS library similar to the python messaging library
 export enum MessageType {
     // 
@@ -112,13 +114,13 @@ export interface ErrorMessage extends BaseMessage {
 
 interface DisplaySettings {
 
-    end_time: Number;
+    end_time?: Number;
     // Lock states:
     // - false: no lock
     // - true: closed lock, not evaluating new connections
     // - n (int in [1, infinity)): after k = n active connections, controller will not
     // accept new connections until k < n
-    lock: Boolean | Number;
+    lock?: Boolean | Number;
 }
     
 

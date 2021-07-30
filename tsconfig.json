@@ -14,8 +14,6 @@
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "strict": true,
-    // TODO(vinhowe): Determine if we need this
-    "types": ["jest"],
   },
   "include": ["./src"]
 }

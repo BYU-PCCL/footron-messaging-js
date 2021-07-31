@@ -1,5 +1,5 @@
 import {Connection, _Connection} from "./connection";
-import { LockStateError, ConnectionNotFoundError } from "./errors";
+// import { LockStateError, ConnectionNotFoundError } from "./errors";
 import {Message, MessageType, PROTOCOL_VERSION} from "./messages";
 import { Request } from "./requests";
 import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback} from "./types";
@@ -13,7 +13,7 @@ export class MessagingClient {
 
   socket: WebSocket;
   url: string;
-  connections: Map<string, Connection>;
+  connections: Map<string, _Connection>;
   connectionListeners: Set<ConnectionCallback>;
   messageListeners: Set<MessageCallback>;
   lock: boolean | number; // protocol
@@ -23,11 +23,13 @@ export class MessagingClient {
   // lock: ?protocol.Lock?;
 
   constructor(url: string) {
+        this.socket = new WebSocket(""); // is this correct? it wants this to be set
         this.url = url;
         this.connections = new Map();
         this.connectionListeners = new Set();
         this.messageListeners = new Set();
         this.lock = false;
+        this.status = "idle";
 
   }
 
@@ -169,7 +171,7 @@ export class MessagingClient {
 
     if (message.type == MessageType.HeartbeatClient) {
       if(!message.up){
-        message.clients.forEach(id => this.removeConnection(id));
+        message.clients.forEach((id: string) => this.removeConnection(id));
         return;
       }
       // TODO: This test might be expensive and unnecessary, consider simplifying
@@ -196,11 +198,11 @@ export class MessagingClient {
     if (message.type == MessageType.ApplicationClient) {
       const listenerMessage = message.req == null ? message.body : new Request(message.body, message.req);
       this.notifyMessageListeners(listenerMessage);
-      this.connections[message.client].notifyMessageListeners(listenerMessage);
+      this.connections.get(message.client)?.notifyMessageListeners(listenerMessage);
     }
 
     if (message.type == MessageType.Lifecycle) {
-      this.connections[message.client].paused = message.paused;
+      this.connections?.get(message.client)?.paused = message.paused; // need function to set paused?
       return
     }
 
@@ -225,20 +227,13 @@ export class MessagingClient {
       this.addConnection(client.getId());
     });
 
-    Array.from(localConnections.keys()).forEach(client => {
-      if (client.keys()[0] in heartbeatConnections){
-        
-        const indexHB = connections.indexOf(client.values()[0]);
-        if (indexHB > -1) {
-          connections.splice(indexHB, 1);
-        }
-        // connections.delete(client.getId());
-        this.connections.delete(client.keys()[0]);
+    for (const [key, value] of Object.entries(localConnections)){
+      if (key in heartbeatConnections){
+        this.connections.delete(key);
         return;
       }
-      this.removeConnection(client.keys()[0]);
-    });
-
+      this.removeConnection(key);
+    }
 
   }
 
@@ -267,7 +262,7 @@ export class MessagingClient {
       this.url, 
       this.sendProtocolMessage, // Is this correct?
       !this.lock);
-    this.connections[id] = connection;
+    this.connections.set(id, connection);
     this.notifyMessageListeners(connection);
   }
 
@@ -275,7 +270,7 @@ export class MessagingClient {
     if(!this.connections.has(id)){
       return;
     }
-    this.connections[id].notifyCloseListeners();
+    this.connections?.get(id)?.notifyCloseListeners();
     this.connections.delete(id);
   }
 

@@ -116,9 +116,9 @@ export class _Connection {
         this.messageListeners.clear();
     }
 
-    // notifyMessageListeners(message: MessageOrRequest) {
-    //     //Not sure
-    // }
+    notifyMessageListeners(message: MessageOrRequest) {
+        //Not sure
+    }
 
     addCloseListener(callback: ConnectionCloseCallback) {
         this.closeListeners.add(callback);

@@ -76,7 +76,7 @@ export interface HeartbeatClientMessage extends BaseHeartbeatMessage {
     clients: Array<string>;
 }
 
-export interface ConnectMessage extends BaseMessage {
+export interface ConnectMessage extends BaseMessage, AppClientIdentifiableMixin {
     type: MessageType.Connect;
     app: string;
   }
@@ -95,21 +95,16 @@ interface BaseApplicationMessage extends BaseMessage {
 
 
 
-export interface ApplicationClientMessage extends BaseApplicationMessage {
+export interface ApplicationClientMessage extends BaseApplicationMessage, AppClientIdentifiableMixin {
     type: MessageType.ApplicationClient,
 
 
 }
 
-export interface ApplicationAppMessage extends  BaseApplicationMessage {
+export interface ApplicationAppMessage extends  BaseApplicationMessage, AppClientIdentifiableMixin {
     type: MessageType.ApplicationApp,
 
 
-}
-
-export interface ErrorMessage extends BaseMessage {
-    type: MessageType.Error;
-    error: string;
 }
 
 interface DisplaySettings {
@@ -135,7 +130,7 @@ export interface ErrorMessage extends BaseMessage {
     error: string;
 }
 
-export interface LifecycleMessage extends BaseMessage {
+export interface LifecycleMessage extends BaseMessage, AppClientIdentifiableMixin {
     type: MessageType.Lifecycle;
     paused: boolean;
 }

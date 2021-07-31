@@ -2,7 +2,7 @@ export class Request{
     body: any;
     id: string;
     
-    constructor(body, id){
+    constructor(body: any, id: string){
         this.body = body;
         this.id = id;
     }

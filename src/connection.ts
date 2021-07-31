@@ -101,6 +101,7 @@ export class _Connection {
             type: MessageType.ApplicationApp,
             body,
             req: requestId,
+            client: this.id,
         })
     }
 

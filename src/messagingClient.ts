@@ -2,10 +2,7 @@ import { Connection, _Connection } from "./connection";
 // import { LockStateError, ConnectionNotFoundError } from "./errors";
 import { Message, MessageType, PROTOCOL_VERSION } from "./messages";
 import { Request } from "./requests";
-import {
-  ConnectionCallback,
-  MessageCallback,
-} from "./types";
+import { ConnectionCallback, MessageCallback } from "./types";
 
 export class MessagingClient {
   //listeners and methods to remove listeners
@@ -30,7 +27,7 @@ export class MessagingClient {
     this.lock = false;
     this.status = "idle";
 
-    this.bindMethods()
+    this.bindMethods();
   }
 
   private bindMethods() {
@@ -139,7 +136,7 @@ export class MessagingClient {
           reject(
             new Error(
               "Socket was set to undefined during CONNECTING state; " +
-              "this is probably a bug"
+                "this is probably a bug"
             )
           );
           return;
@@ -203,7 +200,7 @@ export class MessagingClient {
       return;
     }
 
-    if (!("client" in message) || typeof(message.client) !== "string") {
+    if (!("client" in message) || typeof message.client !== "string") {
       throw Error(
         `Incoming message of type '${message.type}' doesn't contain valid 'client' field required by all remaining message handlers`
       );

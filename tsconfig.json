@@ -13,7 +13,7 @@
     "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": true
   },
   "include": ["./src"]
 }

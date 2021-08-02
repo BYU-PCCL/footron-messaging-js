@@ -1,170 +1,164 @@
-import {Message, MessageType} from "./messages";
-import {MessagingClient} from "./messagingClient";
-import {ConnectionCloseCallback, MessageCallback, MessageOrRequest} from "./types";
-import {LockStateError} from "./errors";
+import { Message, MessageType } from "./messages";
+import { MessagingClient } from "./messagingClient";
+import {
+  ConnectionCloseCallback,
+  MessageCallback,
+  MessageOrRequest,
+} from "./types";
+import { LockStateError } from "./errors";
 
-
-export type SendProtocolMessage = (message: Message) => void
+export type SendProtocolMessage = (message: Message) => void;
 
 export class Connection {
-    /*
+  /*
     Public Connection interface
      */
 
-    public _connection: _Connection;
-    
-    constructor(_connection: _Connection) {
-        this._connection = _connection;
-    }
+  public _connection: _Connection;
 
-    public getId() {
-        return this._connection.id;
-    }
+  constructor(_connection: _Connection) {
+    this._connection = _connection;
+  }
 
-    public isPaused() {
-        return this._connection.paused;
-    }
+  public getId() {
+    return this._connection.id;
+  }
 
-    public accept() {
-        return this._connection.accept();
-    }
+  public isPaused() {
+    return this._connection.paused;
+  }
 
-    public sendMessage(body: unknown, requestId: string = "") {
-        return this._connection.sendMessage(body, requestId);
-    }
+  public accept() {
+    return this._connection.accept();
+  }
 
-    public addMessageListener(callback: MessageCallback) {
-        return this._connection.addMessageListener(callback);
-    }
+  public sendMessage(body: unknown, requestId: string = "") {
+    return this._connection.sendMessage(body, requestId);
+  }
 
-    public removeMessageListener(callback: MessageCallback) {
-        return this._connection.removeMessageListener(callback);
-    }
+  public addMessageListener(callback: MessageCallback) {
+    return this._connection.addMessageListener(callback);
+  }
 
-    public addCloseListener(callback: ConnectionCloseCallback) {
-        return this._connection.addCloseListener(callback);
-    }
+  public removeMessageListener(callback: MessageCallback) {
+    return this._connection.removeMessageListener(callback);
+  }
 
-    public removeCloseListener(callback: ConnectionCloseCallback){
-        return this._connection.removeCloseListener(callback);
-    }
+  public addCloseListener(callback: ConnectionCloseCallback) {
+    return this._connection.addCloseListener(callback);
+  }
+
+  public removeCloseListener(callback: ConnectionCloseCallback) {
+    return this._connection.removeCloseListener(callback);
+  }
 }
 
-
 export class _Connection {
+  id: string;
+  paused: boolean;
+  accepted: boolean;
 
-    id: string;
-    paused: boolean;
-    accepted: boolean;
+  private messagingClient: MessagingClient;
+  private readonly sendProtocolMessage: SendProtocolMessage;
 
-    private messagingClient: MessagingClient;
-    private readonly sendProtocolMessage: SendProtocolMessage;
+  private messageListeners: Set<MessageCallback>;
+  private closeListeners: Set<ConnectionCloseCallback>;
 
-    private messageListeners: Set<MessageCallback>;
-    private closeListeners: Set<ConnectionCloseCallback>;
+  constructor(
+    id: string,
+    accepted: boolean,
+    messagingClient: MessagingClient,
+    sendProtocolMessage: SendProtocolMessage,
+    paused: boolean = false
+  ) {
+    this.id = id;
+    this.sendProtocolMessage = sendProtocolMessage;
+    this.accepted = accepted;
+    this.messagingClient = messagingClient;
+    this.paused = paused;
 
+    this.messageListeners = new Set();
+    this.closeListeners = new Set();
+  }
 
+  //Access methods
 
+  async accept() {
+    await this.updateAccess(true);
+    //Check for initial state?
+  }
 
-    constructor(id: string, accepted: boolean, messagingClient: MessagingClient, sendProtocolMessage: SendProtocolMessage, paused: boolean = false ) {
-      this.id = id;
-      this.sendProtocolMessage = sendProtocolMessage;
-      this.accepted = accepted;
-      this.messagingClient = messagingClient;
-      this.paused = paused;
+  async deny(reason: string = "none") {
+    await this.updateAccess(false, reason);
+  }
 
-      this.messageListeners = new Set();
-      this.closeListeners = new Set();
-
-
-
-
+  private async updateAccess(accepted: boolean, reason: string = "none") {
+    if (!this.messagingClient.getLock()) {
+      throw new LockStateError("locked");
     }
 
-    //Access Methods
+    await this.sendProtocolMessage({
+      type: MessageType.Access,
+      accepted,
+      reason,
+    });
+    this.accepted = true;
+  }
 
-    async accept() {
-        await this.updateAccess(true);
-        //Check for initial state?
+  //Message methods
+
+  async sendMessage<T>(body: T, requestId?: string) {
+    if (!this.accepted) {
+      throw new Error("client not accepted");
     }
 
-    async deny(reason: string = "none") {
-        await this.updateAccess(false, reason);
+    if (this.paused) {
+      return;
     }
 
-    private async updateAccess(accepted: boolean, reason: string = "none") {
-        if (!this.messagingClient.getLock()) {
-            throw new LockStateError("locked");
-        }
+    await this.sendProtocolMessage({
+      type: MessageType.ApplicationApp,
+      body,
+      req: requestId,
+      client: this.id,
+    });
+  }
 
-        await this.sendProtocolMessage({
-            type: MessageType.Access,
-            accepted: accepted,
-            reason: reason,
-        })
-        this.accepted = true;
+  async sendEmptyInitialMessage() {
+    await this.sendMessage({ __start: "" });
+  }
 
-    }
+  addMessageListener(callback: MessageCallback) {
+    this.messageListeners.add(callback);
+  }
 
+  removeMessageListener(callback: MessageCallback) {
+    this.messageListeners.delete(callback);
+  }
 
-    //Message Methods
+  clearMessageListener() {
+    this.messageListeners.clear();
+  }
 
-    async sendMessage<T>(body: T, requestId?: string) {
+  notifyMessageListeners(message: MessageOrRequest) {
+    this.messageListeners.forEach((callback) => callback(message));
+  }
 
-        if(this.accepted == false) {
-            throw new Error("client not accepted");
-        }
+  //Connection Close listener Handling
 
-        if(this.paused == true) {
-            return
-        }
+  addCloseListener(callback: ConnectionCloseCallback) {
+    this.closeListeners.add(callback);
+  }
 
-        await this.sendProtocolMessage( {
-            type: MessageType.ApplicationApp,
-            body,
-            req: requestId,
-            client: this.id,
-        })
-    }
+  removeCloseListener(callback: ConnectionCloseCallback) {
+    this.closeListeners.delete(callback);
+  }
 
-    async sendEmptyInitialMessage() {
-        await this.sendMessage({"__start": ""});
-    }
+  clearCloseListeners() {
+    this.closeListeners.clear();
+  }
 
-    //Message Listener Handling
-
-    addMessageListener(callback: MessageCallback) {
-        this.messageListeners.add(callback);
-    }
-
-    removeMessageListener(callback: MessageCallback) {
-        this.messageListeners.delete(callback);
-    }
-
-    clearMessageListener() {
-        this.messageListeners.clear();
-    }
-
-    notifyMessageListeners(message: MessageOrRequest) {
-        this.messageListeners.forEach((callback) => callback(message))
-    }
-
-    //Connection Close listener Handling
-
-    addCloseListener(callback: ConnectionCloseCallback) {
-        this.closeListeners.add(callback);
-    }
-
-    removeCloseListener(callback: ConnectionCloseCallback) {
-        this.closeListeners.delete(callback);
-    }
-    clearCloseListeners() {
-        this.closeListeners.clear();
-    }
-
-    notifyCloseListeners() {
-        this.closeListeners.forEach((callback) => callback())
-
-    }
-
+  notifyCloseListeners() {
+    this.closeListeners.forEach((callback) => callback());
+  }
 }

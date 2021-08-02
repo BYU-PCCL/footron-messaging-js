@@ -1,15 +1,18 @@
-import {Connection, _Connection} from "./connection";
+import { Connection, _Connection } from "./connection";
 // import { LockStateError, ConnectionNotFoundError } from "./errors";
-import {Message, MessageType, PROTOCOL_VERSION} from "./messages";
+import { Message, MessageType, PROTOCOL_VERSION } from "./messages";
 import { Request } from "./requests";
-import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback} from "./types";
+import {
+  MessageOrRequest,
+  ConnectionCallback,
+  ConnectionCloseCallback,
+  MessageCallback,
+} from "./types";
 
 export class MessagingClient {
-
   //listeners and methods to remove listeners
 
   //will have multiple connections, array. one per device connection.
-
 
   socket: WebSocket;
   url: string;
@@ -19,38 +22,36 @@ export class MessagingClient {
   lock: boolean | number; // protocol
   status: string;
 
-
   // lock: ?protocol.Lock?;
 
   constructor(url: string) {
-        this.socket = new WebSocket(""); // is this correct? it wants this to be set
-        this.url = url;
-        this.connections = new Map();
-        this.connectionListeners = new Set();
-        this.messageListeners = new Set();
-        this.lock = false;
-        this.status = "idle";
-
+    this.socket = new WebSocket(""); // is this correct? it wants this to be set
+    this.url = url;
+    this.connections = new Map();
+    this.connectionListeners = new Set();
+    this.messageListeners = new Set();
+    this.lock = false;
+    this.status = "idle";
   }
 
-  async setLock(lock:boolean | number){
+  async setLock(lock: boolean | number) {
     await this.sendProtocolMessage({
-      type: MessageType.DisplaySettings, settings: { lock }
-    })
+      type: MessageType.DisplaySettings,
+      settings: { lock },
+    });
     this.lock = lock;
   }
-  
-  getLock() {
-      return this.lock;
-  }
 
+  getLock() {
+    return this.lock;
+  }
 
   //
   // Client lifecycle methods (not to be confused with protocol lifecycle
   // messages)
   //
 
-  mount():void {
+  mount(): void {
     // Note that consumers of this class will have to also call setApp to
     //  attempt an actual connection request, and to enter the loading state
     this.openSocket();
@@ -164,13 +165,11 @@ export class MessagingClient {
     return false;
   }
 
-
-
   private async onMessage(data: string) {
     const message = JSON.parse(data);
 
     if (message.type == MessageType.HeartbeatClient) {
-      if(!message.up){
+      if (!message.up) {
         message.clients.forEach((id: string) => this.removeConnection(id));
         return;
       }
@@ -181,7 +180,7 @@ export class MessagingClient {
     }
 
     if (message.type == MessageType.Connect) {
-      if(!(message.client in this.connections)){
+      if (!(message.client in this.connections)) {
         return;
       }
 
@@ -189,33 +188,39 @@ export class MessagingClient {
       return;
     }
 
-    if ("client" in message){
-      if(!(message.client in this.connections)) {
-        throw Error(`Unauthorized client '${message.client}' attempted to send an authenticated message`);
+    if ("client" in message) {
+      if (!(message.client in this.connections)) {
+        throw Error(
+          `Unauthorized client '${message.client}' attempted to send an authenticated message`
+        );
       }
     }
 
     if (message.type == MessageType.ApplicationClient) {
-      const listenerMessage = message.req == null ? message.body : new Request(message.body, message.req);
+      const listenerMessage =
+        message.req == null
+          ? message.body
+          : new Request(message.body, message.req);
       this.notifyMessageListeners(listenerMessage);
-      this.connections.get(message.client)?.notifyMessageListeners(listenerMessage);
+      this.connections
+        .get(message.client)
+        ?.notifyMessageListeners(listenerMessage);
     }
 
     if (message.type == MessageType.Lifecycle) {
       this.connections?.get(message.client)?.paused = message.paused; // need function to set paused?
-      return
+      return;
     }
 
     throw Error(`Couldn't handle message type '${message.type}'`);
-
   }
 
-  private compareHeartbeatUpConnections(connections: Connection[]){
+  private compareHeartbeatUpConnections(connections: Connection[]) {
     var localConnections = new Set(this.connections);
     var heartbeatConnections = new Set(connections);
 
-    Array.from(heartbeatConnections.keys()).forEach(client => {
-      if (client.getId() in localConnections.keys()){
+    Array.from(heartbeatConnections.keys()).forEach((client) => {
+      if (client.getId() in localConnections.keys()) {
         const indexHB = connections.indexOf(client);
         if (indexHB > -1) {
           connections.splice(indexHB, 1);
@@ -227,20 +232,20 @@ export class MessagingClient {
       this.addConnection(client.getId());
     });
 
-    for (const [key, value] of Object.entries(localConnections)){
-      if (key in heartbeatConnections){
+    for (const [key, value] of Object.entries(localConnections)) {
+      if (key in heartbeatConnections) {
         this.connections.delete(key);
         return;
       }
       this.removeConnection(key);
     }
-
   }
 
   private sendMessage(message: Message, requestId?: string) {
-    this.connections.forEach((connection) => connection.sendMessage(message, requestId));
+    this.connections.forEach((connection) =>
+      connection.sendMessage(message, requestId)
+    );
   }
-
 
   // async sendMessage<T>(body: T): Promise<void> {
   //   if (this.connectionAppId == null) {
@@ -253,30 +258,30 @@ export class MessagingClient {
   // Client connection handling
   // (these methods just handle updating internal state and notifying listeners
   // _after_ connections are added/removed)
-  // 
+  //
 
-
-  private addConnection(id: string){
+  private addConnection(id: string) {
     var connection = new _Connection(
       id,
-      this.url, 
+      this.url,
       this.sendProtocolMessage, // Is this correct?
-      !this.lock);
+      !this.lock
+    );
     this.connections.set(id, connection);
     this.notifyMessageListeners(connection);
   }
 
-  private removeConnection(id: string){
-    if(!this.connections.has(id)){
+  private removeConnection(id: string) {
+    if (!this.connections.has(id)) {
       return;
     }
     this.connections?.get(id)?.notifyCloseListeners();
     this.connections.delete(id);
   }
 
-  // 
+  //
   // Message handling
-  // 
+  //
 
   private async sendProtocolMessage(message: Message) {
     if (!(await this.socketReady())) {
@@ -311,9 +316,9 @@ export class MessagingClient {
     return message as unknown as Message;
   }
 
-  // 
+  //
   // Message listener handling
-  // 
+  //
 
   addMessageListener(callback: MessageCallback) {
     this.messageListeners.add(callback);
@@ -324,35 +329,32 @@ export class MessagingClient {
   }
 
   private clearMessageListeners() {
-      this.messageListeners.clear();
+    this.messageListeners.clear();
   }
 
   private notifyMessageListeners(body: unknown) {
-      this.messageListeners.forEach((callback) => callback(body))
+    this.messageListeners.forEach((callback) => callback(body));
   }
 
-  // 
+  //
   // Connection listener handling
-  // 
+  //
 
-  addConnectionListener(callback: ConnectionCallback){
+  addConnectionListener(callback: ConnectionCallback) {
     this.connectionListeners.add(callback);
   }
 
-  removeConnectionListener(callback: ConnectionCallback){
+  removeConnectionListener(callback: ConnectionCallback) {
     this.connectionListeners.delete(callback);
   }
 
-  private clearConnectionListeners(){
+  private clearConnectionListeners() {
     this.connectionListeners.clear();
   }
 
-  private notifyConnectionListeners(connection: _Connection){
-    this.connectionListeners.forEach(callback => {
+  private notifyConnectionListeners(connection: _Connection) {
+    this.connectionListeners.forEach((callback) => {
       callback(new Connection(connection));
-    })
+    });
   }
-
-
 }
-

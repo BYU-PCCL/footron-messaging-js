@@ -171,8 +171,26 @@ export class MessagingClient {
     return false;
   }
 
+  private static parseMessage(data: string): Message {
+    let message: Record<string, unknown>;
+    try {
+      message = JSON.parse(data);
+    } catch (error) {
+      console.error(
+        "An error occurred while attempting to parse a Controls message"
+      );
+      throw error;
+    }
+
+    if (!("type" in message) || typeof message["type"] !== "string") {
+      throw Error("Message received from router didn't specify valid type");
+    }
+
+    return message as unknown as Message;
+  }
+
   private async onMessage(data: string) {
-    const message = JSON.parse(data);
+    const message = MessagingClient.parseMessage(data);
 
     if (message.type == MessageType.HeartbeatClient) {
       if (!message.up) {
@@ -215,37 +233,43 @@ export class MessagingClient {
     }
 
     if (message.type == MessageType.Lifecycle) {
-      this.connections?.get(message.client)?.paused = message.paused; // need function to set paused?
+      const connection = this.connections.get(message.client);
+      if (!connection) {
+        return;
+      }
+
+      connection.paused = message.paused;
       return;
     }
 
     throw Error(`Couldn't handle message type '${message.type}'`);
   }
 
-  private compareHeartbeatUpConnections(connections: Connection[]) {
-    const localConnections = new Set(this.connections);
+  // Based on implementation at
+  // https://github.com/BYU-PCCL/footron-messaging-python/blob/9206e273e5c620e984b67c377fcc319996492e27/foomsg/client.py#L171-L193
+  private compareHeartbeatUpConnections(connections: string[]) {
+    const localConnections = new Set(this.connections.keys());
     const heartbeatConnections = new Set(connections);
 
     Array.from(heartbeatConnections.keys()).forEach((client) => {
-      if (client.getId() in localConnections.keys()) {
-        const indexHB = connections.indexOf(client);
-        if (indexHB > -1) {
-          connections.splice(indexHB, 1);
-        }
-        // connections.delete(client.getId());
-        this.connections.delete(client.getId());
+      if (client in localConnections.keys()) {
+        heartbeatConnections.delete(client);
+        localConnections.delete(client);
         return;
       }
-      this.addConnection(client.getId());
+
+      this.addConnection(client);
     });
 
-    for (const [key, value] of Object.entries(localConnections)) {
-      if (key in heartbeatConnections) {
-        this.connections.delete(key);
+    Array.from(localConnections.keys()).forEach((client) => {
+      if (client in heartbeatConnections.keys()) {
+        heartbeatConnections.delete(client);
+        localConnections.delete(client);
         return;
       }
-      this.removeConnection(key);
-    }
+
+      this.removeConnection(client);
+    });
   }
 
   private sendMessage<T>(body: T, requestId?: string): void {
@@ -253,13 +277,6 @@ export class MessagingClient {
       connection.sendMessage(body, requestId)
     );
   }
-
-  // async sendMessage<T>(body: T): Promise<void> {
-  //   if (this.connectionAppId == null) {
-  //     throw Error(
-  //       "Client attempted to send an application message before authenticating"
-  //     );
-  //   }
 
   //
   // Client connection handling
@@ -303,24 +320,6 @@ export class MessagingClient {
     this.socket?.send(
       JSON.stringify({ ...message, version: PROTOCOL_VERSION })
     );
-  }
-
-  private static parseMessage(data: string): Message {
-    let message: Record<string, unknown>;
-    try {
-      message = JSON.parse(data);
-    } catch (error) {
-      console.error(
-        "An error occurred while attempting to parse a Controls message"
-      );
-      throw error;
-    }
-
-    if (!("type" in message) || typeof message["type"] !== "string") {
-      throw Error("Message received from router doesn't specify valid type");
-    }
-
-    return message as unknown as Message;
   }
 
   //

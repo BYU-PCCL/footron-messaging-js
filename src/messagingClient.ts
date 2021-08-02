@@ -3,9 +3,7 @@ import { Connection, _Connection } from "./connection";
 import { Message, MessageType, PROTOCOL_VERSION } from "./messages";
 import { Request } from "./requests";
 import {
-  MessageOrRequest,
   ConnectionCallback,
-  ConnectionCloseCallback,
   MessageCallback,
 } from "./types";
 
@@ -14,7 +12,7 @@ export class MessagingClient {
 
   //will have multiple connections, array. one per device connection.
 
-  socket: WebSocket;
+  socket?: WebSocket;
   url: string;
   connections: Map<string, _Connection>;
   connectionListeners: Set<ConnectionCallback>;
@@ -25,16 +23,24 @@ export class MessagingClient {
   // lock: ?protocol.Lock?;
 
   constructor(url: string) {
-    this.socket = new WebSocket(""); // is this correct? it wants this to be set
     this.url = url;
     this.connections = new Map();
     this.connectionListeners = new Set();
     this.messageListeners = new Set();
     this.lock = false;
     this.status = "idle";
+
+    this.bindMethods()
   }
 
-  async setLock(lock: boolean | number) {
+  private bindMethods() {
+    this.sendMessage = this.sendMessage.bind(this);
+    this.addMessageListener = this.addMessageListener.bind(this);
+    this.removeMessageListener = this.removeMessageListener.bind(this);
+    this.sendProtocolMessage = this.sendProtocolMessage.bind(this);
+  }
+
+  async setLock(lock: boolean | number): Promise<void> {
     await this.sendProtocolMessage({
       type: MessageType.DisplaySettings,
       settings: { lock },
@@ -42,7 +48,7 @@ export class MessagingClient {
     this.lock = lock;
   }
 
-  getLock() {
+  getLock(): boolean | number {
     return this.lock;
   }
 
@@ -61,7 +67,7 @@ export class MessagingClient {
     this.close();
   }
 
-  private close(reason?: string) {
+  private close() {
     // TODO(vinhowe): Determine if and how we go about distinguishing between
     //  protocol reasons and non-error application reasons. It could be useful
     //  for the user to have some subtle visual cue letting them know
@@ -133,7 +139,7 @@ export class MessagingClient {
           reject(
             new Error(
               "Socket was set to undefined during CONNECTING state; " +
-                "this is probably a bug"
+              "this is probably a bug"
             )
           );
           return;
@@ -179,21 +185,21 @@ export class MessagingClient {
       return;
     }
 
-    if (message.type == MessageType.Connect) {
-      if (!(message.client in this.connections)) {
-        return;
-      }
+    if (!("client" in message) || typeof(message.client) !== "string") {
+      throw Error(
+        `Incoming message of type '${message.type}' doesn't contain valid 'client' field required by all remaining message handlers`
+      );
+    }
 
+    if (message.type == MessageType.Connect) {
       this.addConnection(message.client);
       return;
     }
 
-    if ("client" in message) {
-      if (!(message.client in this.connections)) {
-        throw Error(
-          `Unauthorized client '${message.client}' attempted to send an authenticated message`
-        );
-      }
+    if (!this.connections.has(message.client)) {
+      throw Error(
+        `Unauthorized client '${message.client}' attempted to send an authenticated message`
+      );
     }
 
     if (message.type == MessageType.ApplicationClient) {
@@ -205,6 +211,7 @@ export class MessagingClient {
       this.connections
         .get(message.client)
         ?.notifyMessageListeners(listenerMessage);
+      return;
     }
 
     if (message.type == MessageType.Lifecycle) {
@@ -241,9 +248,9 @@ export class MessagingClient {
     }
   }
 
-  private sendMessage(message: Message, requestId?: string) {
+  private sendMessage<T>(body: T, requestId?: string): void {
     this.connections.forEach((connection) =>
-      connection.sendMessage(message, requestId)
+      connection.sendMessage(body, requestId)
     );
   }
 
@@ -268,7 +275,7 @@ export class MessagingClient {
       !this.lock
     );
     this.connections.set(id, connection);
-    this.notifyMessageListeners(connection);
+    this.notifyConnectionListeners(connection);
   }
 
   private removeConnection(id: string) {

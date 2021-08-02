@@ -53,8 +53,8 @@ interface AppClientIdentifiableMixin {
   // the client connection request and the associated access response. The client has
   // no other control over which app is the recipient of its messages.
   // """
-  client?: String;
-  app?: String;
+  client?: string;
+  app?: string;
 }
 
 interface BaseHeartbeatMessage extends BaseMessage {
@@ -103,13 +103,13 @@ export interface ApplicationAppMessage
 }
 
 interface DisplaySettings {
-  end_time?: Number;
+  end_time?: number;
   // Lock states:
   // - false: no lock
   // - true: closed lock, not evaluating new connections
   // - n (int in [1, infinity)): after k = n active connections, controller will not
   // accept new connections until k < n
-  lock?: Boolean | Number;
+  lock?: boolean | number;
 }
 
 export interface DisplaySettingsMessage extends BaseMessage {

@@ -216,8 +216,8 @@ export class MessagingClient {
   }
 
   private compareHeartbeatUpConnections(connections: Connection[]) {
-    var localConnections = new Set(this.connections);
-    var heartbeatConnections = new Set(connections);
+    const localConnections = new Set(this.connections);
+    const heartbeatConnections = new Set(connections);
 
     Array.from(heartbeatConnections.keys()).forEach((client) => {
       if (client.getId() in localConnections.keys()) {
@@ -261,7 +261,7 @@ export class MessagingClient {
   //
 
   private addConnection(id: string) {
-    var connection = new _Connection(
+    const connection = new _Connection(
       id,
       this.url,
       this.sendProtocolMessage, // Is this correct?

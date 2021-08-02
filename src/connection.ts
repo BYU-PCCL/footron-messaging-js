@@ -32,7 +32,7 @@ export class Connection {
     return this._connection.accept();
   }
 
-  public sendMessage(body: unknown, requestId: string = "") {
+  public sendMessage(body: unknown, requestId = "") {
     return this._connection.sendMessage(body, requestId);
   }
 
@@ -88,11 +88,11 @@ export class _Connection {
     //Check for initial state?
   }
 
-  async deny(reason: string = "none") {
+  async deny(reason = "none") {
     await this.updateAccess(false, reason);
   }
 
-  private async updateAccess(accepted: boolean, reason: string = "none") {
+  private async updateAccess(accepted: boolean, reason = "none") {
     if (!this.messagingClient.getLock()) {
       throw new LockStateError("locked");
     }

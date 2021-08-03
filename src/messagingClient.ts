@@ -9,13 +9,15 @@ import {
 } from "./types";
 
 export class MessagingClient {
-  socket?: WebSocket;
-  url: string;
-  connections: Map<string, _Connection>;
-  connectionListeners: Set<ConnectionCallback>;
-  messageListeners: Set<MessageCallback>;
-  lock: boolean | number;
-  status: ClientConnectionStatus;
+  readonly url: string;
+  private status: ClientConnectionStatus;
+
+  private socket?: WebSocket;
+  private connections: Map<string, _Connection>;
+  private connectionListeners: Set<ConnectionCallback>;
+  private messageListeners: Set<MessageCallback>;
+  private lock: boolean | number;
+  private readonly hasInitialState: boolean;
 
   constructor(url: string) {
     this.url = url;

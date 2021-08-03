@@ -72,6 +72,7 @@ export class MessagingClient {
 
     this.closeSocket();
     this.clearMessageListeners();
+    this.clearConnectionListeners();
   }
 
   //

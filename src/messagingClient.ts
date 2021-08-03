@@ -206,7 +206,7 @@ export class MessagingClient {
       let connection = this.connections.get(message.client);
 
       if (!connection) {
-        connection = this.addConnection(message.client)
+        connection = this.addConnection(message.client);
       }
 
       if (!this.hasInitialState && connection.accepted) {

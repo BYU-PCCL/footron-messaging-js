@@ -61,6 +61,7 @@ export class MessagingClient {
   //
 
   mount(): void {
+    this._status = "loading";
     this.openSocket();
   }
 
@@ -91,6 +92,7 @@ export class MessagingClient {
     // TODO: Handle retries here
     this.socket = new WebSocket(this.url);
     this.socket.addEventListener("message", ({ data }) => this.onMessage(data));
+    this.socket.addEventListener("open", () => (this._status = "open"));
     this.socket.addEventListener("close", this.onSocketClose);
   }
 

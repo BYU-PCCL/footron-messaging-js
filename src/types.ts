@@ -1,6 +1,7 @@
 import { Connection } from "./connection";
-import { MessagingClient } from "./messagingClient";
 import { Request } from "./requests";
+
+export type ClientConnectionStatus = "idle" | "loading" | "open" | "closed";
 
 export type MessageOrRequest = unknown | Request;
 

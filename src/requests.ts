@@ -1,8 +1,8 @@
 export class Request {
-  body: any;
+  body: unknown;
   id: string;
 
-  constructor(body: any, id: string) {
+  constructor(body: unknown, id: string) {
     this.body = body;
     this.id = id;
   }

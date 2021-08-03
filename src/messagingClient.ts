@@ -5,10 +5,6 @@ import { Request } from "./requests";
 import { ConnectionCallback, MessageCallback } from "./types";
 
 export class MessagingClient {
-  //listeners and methods to remove listeners
-
-  //will have multiple connections, array. one per device connection.
-
   socket?: WebSocket;
   url: string;
   connections: Map<string, _Connection>;
@@ -55,8 +51,6 @@ export class MessagingClient {
   //
 
   mount(): void {
-    // Note that consumers of this class will have to also call setApp to
-    //  attempt an actual connection request, and to enter the loading state
     this.openSocket();
   }
 
@@ -65,17 +59,6 @@ export class MessagingClient {
   }
 
   private close() {
-    // TODO(vinhowe): Determine if and how we go about distinguishing between
-    //  protocol reasons and non-error application reasons. It could be useful
-    //  for the user to have some subtle visual cue letting them know
-    //  immediately whether they should be concerned or if they just got
-    //  eliminated from their game.
-    //  While it seems like we could solve this with clear messaging on the part
-    //  of developers ("You lost! Better luck next time!" is way better than
-    //  something terse and ambiguous like "Experience Disconnected"), I want
-    //  to be careful not to assume that users will see things the same way we
-    //  do.
-
     if (this.status == "closed") {
       // @vinhowe: This return statement just makes close() idempotent because
       // I can't think of a reason why we'd care whether this method is called
@@ -127,7 +110,7 @@ export class MessagingClient {
     }
 
     if (this.socket.readyState == WebSocket.CONNECTING) {
-      // Await until either socket connects or times out
+      // Await until either socket connects or closes
       // @vinhowe: Technically we could just return a boolean promise, but
       // there's no non-error state where it would potentially return anything
       // other than true, so that didn't make sense to me.

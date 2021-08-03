@@ -270,9 +270,9 @@ export class MessagingClient {
   private addConnection(id: string) {
     const connection = new _Connection(
       id,
-      this.url,
-      this.sendProtocolMessage, // Is this correct?
-      !this.lock
+      !this.lock,
+      this,
+      this.sendProtocolMessage // Is this correct?
     );
     this.connections.set(id, connection);
     this.notifyConnectionListeners(connection);

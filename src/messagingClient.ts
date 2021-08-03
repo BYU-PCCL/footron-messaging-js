@@ -14,10 +14,8 @@ export class MessagingClient {
   connections: Map<string, _Connection>;
   connectionListeners: Set<ConnectionCallback>;
   messageListeners: Set<MessageCallback>;
-  lock: boolean | number; // protocol
+  lock: boolean | number;
   status: ClientConnectionStatus;
-
-  // lock: ?protocol.Lock?;
 
   constructor(url: string) {
     this.url = url;

@@ -1,4 +1,4 @@
-import { Connection, _Connection } from "./connection";
+import { Connection, ConnectionImpl } from "./connection";
 // import { LockStateError, ConnectionNotFoundError } from "./errors";
 import { Message, MessageType, PROTOCOL_VERSION } from "./messages";
 import { Request } from "./requests";
@@ -13,7 +13,7 @@ export class MessagingClient {
   private status: ClientConnectionStatus;
 
   private socket?: WebSocket;
-  private connections: Map<string, _Connection>;
+  private connections: Map<string, ConnectionImpl>;
   private connectionListeners: Set<ConnectionCallback>;
   private messageListeners: Set<MessageCallback>;
   private lock: boolean | number;
@@ -278,8 +278,8 @@ export class MessagingClient {
   // _after_ connections are added/removed)
   //
 
-  private addConnection(id: string): _Connection {
-    const connection = new _Connection(
+  private addConnection(id: string): ConnectionImpl {
+    const connection = new ConnectionImpl(
       id,
       !this.lock,
       this,
@@ -353,7 +353,7 @@ export class MessagingClient {
     this.connectionListeners.clear();
   }
 
-  private notifyConnectionListeners(connection: _Connection) {
+  private notifyConnectionListeners(connection: ConnectionImpl) {
     this.connectionListeners.forEach((callback) => {
       callback(new Connection(connection));
     });

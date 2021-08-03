@@ -309,11 +309,11 @@ export class MessagingClient {
   // Message listener handling
   //
 
-  addMessageListener(callback: MessageCallback) {
+  addMessageListener(callback: MessageCallback): void {
     this.messageListeners.add(callback);
   }
 
-  removeMessageListener(callback: MessageCallback) {
+  removeMessageListener(callback: MessageCallback): void {
     this.messageListeners.delete(callback);
   }
 
@@ -329,11 +329,11 @@ export class MessagingClient {
   // Connection listener handling
   //
 
-  addConnectionListener(callback: ConnectionCallback) {
+  addConnectionListener(callback: ConnectionCallback): void {
     this.connectionListeners.add(callback);
   }
 
-  removeConnectionListener(callback: ConnectionCallback) {
+  removeConnectionListener(callback: ConnectionCallback): void {
     this.connectionListeners.delete(callback);
   }
 

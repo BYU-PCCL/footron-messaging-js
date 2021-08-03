@@ -235,7 +235,7 @@ export class MessagingClient {
     const heartbeatConnections = new Set(connections);
 
     Array.from(heartbeatConnections.keys()).forEach((client) => {
-      if (client in localConnections.keys()) {
+      if (localConnections.has(client)) {
         heartbeatConnections.delete(client);
         localConnections.delete(client);
         return;
@@ -245,7 +245,7 @@ export class MessagingClient {
     });
 
     Array.from(localConnections.keys()).forEach((client) => {
-      if (client in heartbeatConnections.keys()) {
+      if (heartbeatConnections.has(client)) {
         heartbeatConnections.delete(client);
         localConnections.delete(client);
         return;

@@ -100,7 +100,7 @@ export class ConnectionImpl {
     accepted: boolean,
     reason?: string
   ): Promise<void> {
-    if (!this.messagingClient.getLock()) {
+    if (!this.messagingClient.lock) {
       throw new LockStateError("locked");
     }
 

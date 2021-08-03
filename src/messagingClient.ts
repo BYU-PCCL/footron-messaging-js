@@ -10,23 +10,24 @@ import {
 
 export class MessagingClient {
   readonly url: string;
-  private status: ClientConnectionStatus;
   readonly hasInitialState: boolean;
+
+  private _status: ClientConnectionStatus;
+  private _lock: boolean | number;
 
   private socket?: WebSocket;
   private connections: Map<string, ConnectionImpl>;
   private connectionListeners: Set<ConnectionCallback>;
   private messageListeners: Set<MessageCallback>;
-  private lock: boolean | number;
 
   constructor(url: string, hasInitialState = false) {
     this.url = url;
     this.connections = new Map();
     this.connectionListeners = new Set();
     this.messageListeners = new Set();
-    this.lock = false;
+    this._lock = false;
     this.hasInitialState = hasInitialState;
-    this.status = "idle";
+    this._status = "idle";
 
     this.bindMethods();
   }
@@ -43,11 +44,15 @@ export class MessagingClient {
       type: MessageType.DisplaySettings,
       settings: { lock },
     });
-    this.lock = lock;
+    this._lock = lock;
   }
 
-  getLock(): boolean | number {
-    return this.lock;
+  get lock(): boolean | number {
+    return this._lock;
+  }
+
+  get status(): ClientConnectionStatus {
+    return this._status;
   }
 
   //
@@ -64,7 +69,7 @@ export class MessagingClient {
   }
 
   private close() {
-    if (this.status == "closed") {
+    if (this._status == "closed") {
       // @vinhowe: This return statement just makes close() idempotent because
       // I can't think of a reason why we'd care whether this method is called
       // multiple times. It could be bad practice not to throw an error here.
@@ -281,7 +286,7 @@ export class MessagingClient {
   private addConnection(id: string): ConnectionImpl {
     const connection = new ConnectionImpl(
       id,
-      !this.lock,
+      !this._lock,
       this,
       this.sendProtocolMessage // Is this correct?
     );

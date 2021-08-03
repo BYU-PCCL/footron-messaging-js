@@ -11,13 +11,13 @@ import {
 export class MessagingClient {
   readonly url: string;
   private status: ClientConnectionStatus;
+  readonly hasInitialState: boolean;
 
   private socket?: WebSocket;
   private connections: Map<string, ConnectionImpl>;
   private connectionListeners: Set<ConnectionCallback>;
   private messageListeners: Set<MessageCallback>;
   private lock: boolean | number;
-  private readonly hasInitialState: boolean;
 
   constructor(url: string, hasInitialState = false) {
     this.url = url;

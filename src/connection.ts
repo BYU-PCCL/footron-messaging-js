@@ -85,7 +85,9 @@ export class ConnectionImpl {
 
   async accept(): Promise<void> {
     await this.updateAccess(true);
-    //Check for initial state?
+    if (!this.messagingClient.hasInitialState) {
+      await this.sendEmptyInitialMessage();
+    }
   }
 
   async deny(reason?: string): Promise<void> {

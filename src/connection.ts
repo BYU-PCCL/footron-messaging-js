@@ -14,46 +14,46 @@ export class Connection {
     Public Connection interface
      */
 
-  public _connection: _Connection;
+  private impl: ConnectionImpl;
 
-  constructor(_connection: _Connection) {
-    this._connection = _connection;
+  constructor(connectionImpl: ConnectionImpl) {
+    this.impl = connectionImpl;
   }
 
   getId(): string {
-    return this._connection.id;
+    return this.impl.id;
   }
 
   isPaused(): boolean {
-    return this._connection.paused;
+    return this.impl.paused;
   }
 
   async accept(): Promise<void> {
-    return this._connection.accept();
+    return this.impl.accept();
   }
 
   async sendMessage(body: unknown, requestId?: string): Promise<void> {
-    return this._connection.sendMessage(body, requestId);
+    return this.impl.sendMessage(body, requestId);
   }
 
   addMessageListener(callback: MessageCallback): void {
-    this._connection.addMessageListener(callback);
+    this.impl.addMessageListener(callback);
   }
 
   removeMessageListener(callback: MessageCallback): void {
-    this._connection.removeMessageListener(callback);
+    this.impl.removeMessageListener(callback);
   }
 
   addCloseListener(callback: ConnectionCloseCallback): void {
-    this._connection.addCloseListener(callback);
+    this.impl.addCloseListener(callback);
   }
 
   removeCloseListener(callback: ConnectionCloseCallback): void {
-    this._connection.removeCloseListener(callback);
+    this.impl.removeCloseListener(callback);
   }
 }
 
-export class _Connection {
+export class ConnectionImpl {
   id: string;
   paused: boolean;
   accepted: boolean;

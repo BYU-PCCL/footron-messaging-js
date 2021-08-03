@@ -20,36 +20,36 @@ export class Connection {
     this._connection = _connection;
   }
 
-  public getId() {
+  getId(): string {
     return this._connection.id;
   }
 
-  public isPaused() {
+  isPaused(): boolean {
     return this._connection.paused;
   }
 
-  public accept() {
+  async accept(): Promise<void> {
     return this._connection.accept();
   }
 
-  public sendMessage(body: unknown, requestId = "") {
+  async sendMessage(body: unknown, requestId = ""): Promise<void> {
     return this._connection.sendMessage(body, requestId);
   }
 
-  public addMessageListener(callback: MessageCallback) {
-    return this._connection.addMessageListener(callback);
+  addMessageListener(callback: MessageCallback): void {
+    this._connection.addMessageListener(callback);
   }
 
-  public removeMessageListener(callback: MessageCallback) {
-    return this._connection.removeMessageListener(callback);
+  removeMessageListener(callback: MessageCallback): void {
+    this._connection.removeMessageListener(callback);
   }
 
-  public addCloseListener(callback: ConnectionCloseCallback) {
-    return this._connection.addCloseListener(callback);
+  addCloseListener(callback: ConnectionCloseCallback): void {
+    this._connection.addCloseListener(callback);
   }
 
-  public removeCloseListener(callback: ConnectionCloseCallback) {
-    return this._connection.removeCloseListener(callback);
+  removeCloseListener(callback: ConnectionCloseCallback): void {
+    this._connection.removeCloseListener(callback);
   }
 }
 
@@ -83,16 +83,16 @@ export class _Connection {
 
   //Access methods
 
-  async accept() {
+  async accept(): Promise<void> {
     await this.updateAccess(true);
     //Check for initial state?
   }
 
-  async deny(reason = "none") {
+  async deny(reason = "none"): Promise<void> {
     await this.updateAccess(false, reason);
   }
 
-  private async updateAccess(accepted: boolean, reason = "none") {
+  private async updateAccess(accepted: boolean, reason = "none"): Promise<void> {
     if (!this.messagingClient.getLock()) {
       throw new LockStateError("locked");
     }
@@ -107,7 +107,7 @@ export class _Connection {
 
   //Message methods
 
-  async sendMessage<T>(body: T, requestId?: string) {
+  async sendMessage<T>(body: T, requestId?: string): Promise<void> {
     if (!this.accepted) {
       throw new Error("client not accepted");
     }
@@ -124,41 +124,41 @@ export class _Connection {
     });
   }
 
-  async sendEmptyInitialMessage() {
+  async sendEmptyInitialMessage(): Promise<void> {
     await this.sendMessage({ __start: "" });
   }
 
-  addMessageListener(callback: MessageCallback) {
+  addMessageListener(callback: MessageCallback): void {
     this.messageListeners.add(callback);
   }
 
-  removeMessageListener(callback: MessageCallback) {
+  removeMessageListener(callback: MessageCallback): void {
     this.messageListeners.delete(callback);
   }
 
-  clearMessageListener() {
+  clearMessageListener(): void {
     this.messageListeners.clear();
   }
 
-  notifyMessageListeners(message: MessageOrRequest) {
+  notifyMessageListeners(message: MessageOrRequest): void {
     this.messageListeners.forEach((callback) => callback(message));
   }
 
   //Connection Close listener Handling
 
-  addCloseListener(callback: ConnectionCloseCallback) {
+  addCloseListener(callback: ConnectionCloseCallback): void {
     this.closeListeners.add(callback);
   }
 
-  removeCloseListener(callback: ConnectionCloseCallback) {
+  removeCloseListener(callback: ConnectionCloseCallback): void {
     this.closeListeners.delete(callback);
   }
 
-  clearCloseListeners() {
+  clearCloseListeners(): void {
     this.closeListeners.clear();
   }
 
-  notifyCloseListeners() {
+  notifyCloseListeners(): void {
     this.closeListeners.forEach((callback) => callback());
   }
 }

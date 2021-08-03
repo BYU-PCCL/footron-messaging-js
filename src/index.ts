@@ -6,7 +6,7 @@ export class Messaging extends MessagingClient {
   constructor(url?: string) {
     if (url == null) {
       url =
-        new URLSearchParams(location.href).get("ftMsgUrl") ??
+        new URLSearchParams(location.search).get("ftMsgUrl") ??
         "ws://localhost:8089/out";
     }
     super(url);

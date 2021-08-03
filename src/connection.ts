@@ -69,7 +69,7 @@ export class _Connection {
     accepted: boolean,
     messagingClient: MessagingClient,
     sendProtocolMessage: SendProtocolMessage,
-    paused: boolean = false
+    paused = false
   ) {
     this.id = id;
     this.sendProtocolMessage = sendProtocolMessage;

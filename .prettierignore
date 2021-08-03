@@ -1,3 +1,10 @@
-.yarn/
+dist/
+lib/
+es/
+types/
 build/
+.yarn/
+.yarnrc.yml
+yarn.lock
 .pnp.*
+size-plugin.json

@@ -81,7 +81,9 @@ export class ConnectionImpl {
     this.closeListeners = new Set();
   }
 
-  //Access methods
+  //
+  // Access methods
+  //
 
   async accept(): Promise<void> {
     await this.updateAccess(true);
@@ -110,7 +112,9 @@ export class ConnectionImpl {
     this.accepted = true;
   }
 
-  //Message methods
+  //
+  // Message methods
+  //
 
   async sendMessage<T>(body: T, requestId?: string): Promise<void> {
     if (!this.accepted) {
@@ -133,6 +137,10 @@ export class ConnectionImpl {
     await this.sendMessage({ __start: "" });
   }
 
+  //
+  // Message listener handling
+  //
+
   addMessageListener(callback: MessageCallback): void {
     this.messageListeners.add(callback);
   }
@@ -149,7 +157,9 @@ export class ConnectionImpl {
     this.messageListeners.forEach((callback) => callback(message));
   }
 
-  //Connection Close listener Handling
+  //
+  // Connection close listener handling
+  //
 
   addCloseListener(callback: ConnectionCloseCallback): void {
     this.closeListeners.add(callback);

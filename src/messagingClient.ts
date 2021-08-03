@@ -19,12 +19,13 @@ export class MessagingClient {
   private lock: boolean | number;
   private readonly hasInitialState: boolean;
 
-  constructor(url: string) {
+  constructor(url: string, hasInitialState = false) {
     this.url = url;
     this.connections = new Map();
     this.connectionListeners = new Set();
     this.messageListeners = new Set();
     this.lock = false;
+    this.hasInitialState = hasInitialState;
     this.status = "idle";
 
     this.bindMethods();
@@ -195,7 +196,15 @@ export class MessagingClient {
     }
 
     if (message.type == MessageType.Connect) {
-      this.addConnection(message.client);
+      let connection = this.connections.get(message.client);
+
+      if (!connection) {
+        connection = this.addConnection(message.client)
+      }
+
+      if (!this.hasInitialState && connection.accepted) {
+        await connection.sendEmptyInitialMessage();
+      }
       return;
     }
 
@@ -269,7 +278,7 @@ export class MessagingClient {
   // _after_ connections are added/removed)
   //
 
-  private addConnection(id: string) {
+  private addConnection(id: string): _Connection {
     const connection = new _Connection(
       id,
       !this.lock,
@@ -278,6 +287,7 @@ export class MessagingClient {
     );
     this.connections.set(id, connection);
     this.notifyConnectionListeners(connection);
+    return connection;
   }
 
   private removeConnection(id: string) {

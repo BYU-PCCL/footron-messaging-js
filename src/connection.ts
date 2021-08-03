@@ -1,6 +1,6 @@
 import {Message, MessageType} from "./messages";
 import {MessagingClient} from "./messagingClient";
-import { MessageOrRequest, ConnectionCallback, ConnectionCloseCallback, MessageCallback } from "./types";
+import {ConnectionCloseCallback, MessageCallback, MessageOrRequest} from "./types";
 import {LockStateError} from "./errors";
 
 
@@ -54,25 +54,38 @@ export class Connection {
 export class _Connection {
 
     id: string;
-    private readonly sendProtocolMessage: SendProtocolMessage;
-    private accepted: boolean;
     paused: boolean;
+    accepted: boolean;
+
     private messagingClient: MessagingClient;
+    private readonly sendProtocolMessage: SendProtocolMessage;
+
     private messageListeners: Set<MessageCallback>;
     private closeListeners: Set<ConnectionCloseCallback>;
 
-    constructor(id: string, url: string, protocolMessage: SendProtocolMessage, accepted: boolean) {
+
+
+
+    constructor(id: string, accepted: boolean, messagingClient: MessagingClient, sendProtocolMessage: SendProtocolMessage, paused: boolean = false ) {
       this.id = id;
-      this.sendProtocolMessage = protocolMessage;
+      this.sendProtocolMessage = sendProtocolMessage;
       this.accepted = accepted;
-      this.paused = false;
-      this.messagingClient = new MessagingClient(url);
+      this.messagingClient = messagingClient;
+      this.paused = paused;
+
       this.messageListeners = new Set();
       this.closeListeners = new Set();
+
+
+
+
     }
+
+    //Access Methods
 
     async accept() {
         await this.updateAccess(true);
+        //Check for initial state?
     }
 
     async deny(reason: string = "none") {
@@ -81,20 +94,29 @@ export class _Connection {
 
     private async updateAccess(accepted: boolean, reason: string = "none") {
         if (!this.messagingClient.getLock()) {
-            //Lockstate error
             throw new LockStateError("locked");
-
         }
-        //access message???
+
+        await this.sendProtocolMessage({
+            type: MessageType.Access,
+            accepted: accepted,
+            reason: reason,
+        })
+        this.accepted = true;
+
     }
 
 
+    //Message Methods
 
     async sendMessage<T>(body: T, requestId?: string) {
 
         if(this.accepted == false) {
-            //protocol error.
             throw new Error("client not accepted");
+        }
+
+        if(this.paused == true) {
+            return
         }
 
         await this.sendProtocolMessage( {
@@ -104,6 +126,12 @@ export class _Connection {
             client: this.id,
         })
     }
+
+    async sendEmptyInitialMessage() {
+        await this.sendMessage({"__start": ""});
+    }
+
+    //Message Listener Handling
 
     addMessageListener(callback: MessageCallback) {
         this.messageListeners.add(callback);
@@ -118,8 +146,10 @@ export class _Connection {
     }
 
     notifyMessageListeners(message: MessageOrRequest) {
-        //Not sure
+        this.messageListeners.forEach((callback) => callback(message))
     }
+
+    //Connection Close listener Handling
 
     addCloseListener(callback: ConnectionCloseCallback) {
         this.closeListeners.add(callback);
@@ -133,6 +163,7 @@ export class _Connection {
     }
 
     notifyCloseListeners() {
+        this.closeListeners.forEach((callback) => callback())
 
     }
 

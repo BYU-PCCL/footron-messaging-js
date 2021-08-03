@@ -2,7 +2,11 @@ import { Connection, _Connection } from "./connection";
 // import { LockStateError, ConnectionNotFoundError } from "./errors";
 import { Message, MessageType, PROTOCOL_VERSION } from "./messages";
 import { Request } from "./requests";
-import { ConnectionCallback, MessageCallback } from "./types";
+import {
+  ClientConnectionStatus,
+  ConnectionCallback,
+  MessageCallback,
+} from "./types";
 
 export class MessagingClient {
   socket?: WebSocket;
@@ -11,7 +15,7 @@ export class MessagingClient {
   connectionListeners: Set<ConnectionCallback>;
   messageListeners: Set<MessageCallback>;
   lock: boolean | number; // protocol
-  status: string;
+  status: ClientConnectionStatus;
 
   // lock: ?protocol.Lock?;
 

@@ -255,7 +255,7 @@ export class MessagingClient {
     });
   }
 
-  private sendMessage<T>(body: T, requestId?: string): void {
+  sendMessage<T>(body: T, requestId?: string): void {
     this.connections.forEach((connection) =>
       connection.sendMessage(body, requestId)
     );

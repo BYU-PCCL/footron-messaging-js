@@ -10,6 +10,10 @@
 
 # production
 /build
+/dist
+/lib
+/es
+/types
 
 # misc
 .DS_Store
@@ -38,3 +42,5 @@ yarn-error.log*
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+
+size-plugin.json

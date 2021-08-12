@@ -32,6 +32,10 @@ export class Connection {
     return this.impl.accept();
   }
 
+  async deny(): Promise<void> {
+    return this.impl.deny();
+  }
+
   async sendMessage(body: unknown, requestId?: string): Promise<void> {
     return this.impl.sendMessage(body, requestId);
   }

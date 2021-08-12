@@ -108,6 +108,7 @@ export class ConnectionImpl {
       type: MessageType.Access,
       accepted,
       reason,
+      client: this.id,
     });
     this.accepted = true;
   }

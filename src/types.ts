@@ -8,3 +8,4 @@ export type MessageOrRequest = unknown | Request;
 export type MessageCallback = (body: MessageOrRequest) => void;
 export type ConnectionCallback = (body: Connection) => void;
 export type ConnectionCloseCallback = () => void;
+export type LifecycleCallback = (paused: boolean) => void;

@@ -2,6 +2,7 @@ import { Message, MessageType } from "./messages";
 import { MessagingClient } from "./messagingClient";
 import {
   ConnectionCloseCallback,
+  LifecycleCallback,
   MessageCallback,
   MessageOrRequest,
 } from "./types";
@@ -55,18 +56,27 @@ export class Connection {
   removeCloseListener(callback: ConnectionCloseCallback): void {
     this.impl.removeCloseListener(callback);
   }
+
+  addLifecycleListener(callback: LifecycleCallback): void {
+    this.impl.addLifecycleListener(callback);
+  }
+
+  removeLifecycleListener(callback: LifecycleCallback): void {
+    this.impl.removeLifecycleListener(callback);
+  }
 }
 
 export class ConnectionImpl {
   id: string;
-  paused: boolean;
   accepted: boolean;
 
+  private _paused: boolean;
   private messagingClient: MessagingClient;
   private readonly sendProtocolMessage: SendProtocolMessage;
 
   private messageListeners: Set<MessageCallback>;
   private closeListeners: Set<ConnectionCloseCallback>;
+  private lifecycleListeners: Set<LifecycleCallback>;
 
   constructor(
     id: string,
@@ -79,10 +89,20 @@ export class ConnectionImpl {
     this.sendProtocolMessage = sendProtocolMessage;
     this.accepted = accepted;
     this.messagingClient = messagingClient;
-    this.paused = paused;
+    this._paused = paused;
 
     this.messageListeners = new Set();
     this.closeListeners = new Set();
+    this.lifecycleListeners = new Set();
+  }
+
+  set paused(paused: boolean) {
+    this._paused = paused;
+    this.notifyLifecycleListeners(paused);
+  }
+
+  get paused(): boolean {
+    return this._paused;
   }
 
   //
@@ -180,5 +200,25 @@ export class ConnectionImpl {
 
   notifyCloseListeners(): void {
     this.closeListeners.forEach((callback) => callback());
+  }
+
+  //
+  // Lifecycle listener handling
+  //
+
+  addLifecycleListener(callback: LifecycleCallback): void {
+    this.lifecycleListeners.add(callback);
+  }
+
+  removeLifecycleListener(callback: LifecycleCallback): void {
+    this.lifecycleListeners.delete(callback);
+  }
+
+  clearLifecycleListeners(): void {
+    this.lifecycleListeners.clear();
+  }
+
+  notifyLifecycleListeners(paused: boolean): void {
+    this.lifecycleListeners.forEach((callback) => callback(paused));
   }
 }

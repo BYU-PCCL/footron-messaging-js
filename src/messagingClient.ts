@@ -92,7 +92,7 @@ export class MessagingClient {
   private openSocket() {
     // TODO: Handle retries here
     this.socket = new WebSocket(this.url);
-    this.socket.addEventListener("message", ({ data }) => this.onMessage(data));
+    this.socket.addEventListener("message", this.onMessage);
     this.socket.addEventListener("open", () => (this._status = "open"));
     this.socket.addEventListener("close", this.onSocketClose);
   }
@@ -188,7 +188,7 @@ export class MessagingClient {
     return message as unknown as Message;
   }
 
-  private async onMessage(data: string) {
+  private async onMessage({ data }: { data: string }) {
     const message = MessagingClient.parseMessage(data);
 
     if (message.type == MessageType.HeartbeatClient) {

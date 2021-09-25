@@ -37,6 +37,7 @@ export class MessagingClient {
     this.addMessageListener = this.addMessageListener.bind(this);
     this.removeMessageListener = this.removeMessageListener.bind(this);
     this.sendProtocolMessage = this.sendProtocolMessage.bind(this);
+    this.openSocket = this.openSocket.bind(this);
   }
 
   async setLock(lock: boolean | number): Promise<void> {
@@ -110,6 +111,11 @@ export class MessagingClient {
   private onSocketClose() {
     // Status is idle, loading, or open, so we'll retry opening the socket
     // after a delay to avoid spamming the server
+    console.info("Socket closed, attempting to reopen in 1s");
+
+    this.connections = new Map();
+    this._lock = false;
+
     setTimeout(this.openSocket, 1000);
   }
 

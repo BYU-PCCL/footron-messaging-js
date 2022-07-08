@@ -38,6 +38,7 @@ export class MessagingClient {
     this.removeMessageListener = this.removeMessageListener.bind(this);
     this.sendProtocolMessage = this.sendProtocolMessage.bind(this);
     this.openSocket = this.openSocket.bind(this);
+    this.onMessage = this.onMessage.bind(this);
   }
 
   async setLock(lock: boolean | number): Promise<void> {

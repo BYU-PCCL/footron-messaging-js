@@ -1,6 +1,6 @@
 {
   "name": "@footron/messaging",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "author": "BYU PCCL",
   "main": "lib/index.js",
   "unpkg": "dist/footron-messaging.development.js",
